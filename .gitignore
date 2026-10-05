@@ -1,8 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp/
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,32 +8,131 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
 # next.js
-/.next/
-/out/
+.next/
+out/
+build/
+dist/
 
 # production
-/build
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-.DS_Store
-*.pem
+# environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
 
-# debug
+# logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# testing and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
 
-# vercel
-.vercel
+# macos
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# windows
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+$RECYCLE.BIN/
+
+# editors and IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# local environment and tooling
+.vercel/
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+
+# python / FastAPI backend (if added)
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# databases and local data
+*.sqlite
+*.sqlite3
+*.db
+data/
+local-data/
+postgres-data/
+mongodb-data/
+
+# docker overrides
+docker-compose.override.yml
+
+# generated files
+*.bak
+*.tmp
+*.orig
+*.rej
+
+# local uploads and generated artifacts
+uploads/
+storage/
+artifacts/
+
+# secrets and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.json
+service-account*.json
+
+# package manager lockfiles
+# keep package-lock.json, pnpm-lock.yaml, and yarn.lock tracked
