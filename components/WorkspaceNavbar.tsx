@@ -1,7 +1,12 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function WorkspaceNavbar() {
+  const pathname = usePathname();
+
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex flex-col w-[248px] xl:w-[248px] lg:w-[224px] max-lg:-translate-x-full lg:translate-x-0 p-[23px_15px_17px] bg-white border-r border-[#e2e8f0] transition-transform duration-200 ease-in-out">
       
@@ -22,24 +27,24 @@ export function WorkspaceNavbar() {
       </div>
       
       <nav className="flex flex-col gap-[4px]">
-        <button className="flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-[#97002f] bg-[#fff0f4] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer">
-          <svg className="flex-none text-[#97002f]" width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <Link href="/workspace" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
+          <svg className={`flex-none ${pathname === '/workspace' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
             <rect x="13.5" y="3.5" width="7" height="4" rx="1.3" stroke="currentColor" strokeWidth="1.7"/>
             <rect x="13.5" y="10.5" width="7" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
             <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
           </svg> 
           Overview
-        </button>
+        </Link>
         
-        <button className="flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent text-left font-[650] text-[13px] transition-colors duration-150 group cursor-pointer">
-          <svg className="flex-none text-[#7b899b] group-hover:text-[#526178]" width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <Link href="/workspace/runs" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/runs' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
+          <svg className={`flex-none ${pathname === '/workspace/runs' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z" stroke="currentColor" strokeWidth="1.7"/>
             <path d="M7.5 9h9M7.5 12.5h6M7.5 16h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
           </svg> 
           Matching runs 
-          <span className="ml-auto rounded-[7px] p-[2px_7px] text-[#8e002c] bg-[#ffe0e9] text-[10px] font-[800]">12</span>
-        </button>
+          <span className={`ml-auto rounded-[7px] p-[2px_7px] text-[10px] font-[800] ${pathname === '/workspace/runs' ? 'text-[#8e002c] bg-[#ffe0e9]' : 'text-[#8e002c] bg-[#ffe0e9]'}`}>12</span>
+        </Link>
 
         <button className="flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent text-left font-[650] text-[13px] transition-colors duration-150 group cursor-pointer">
           <svg className="flex-none text-[#7b899b] group-hover:text-[#526178]" width="17" height="17" viewBox="0 0 24 24" fill="none">
