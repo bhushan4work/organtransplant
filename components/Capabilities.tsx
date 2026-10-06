@@ -35,7 +35,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Deterministic Logic
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Zero AI/ML black boxes. We use purely mathematical, versioned rulesets that yield the exact same result every single time.
             </p>
           </article>
@@ -50,7 +50,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Human Explainability
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Every allocation decision comes with a clinical justification, explaining exactly why Candidate A ranked higher than Candidate B.
             </p>
           </article>
@@ -65,7 +65,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Pseudonymous Identity
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Patient PII never enters the matching engine. We operate on secure cryptographic identifiers to preserve complete privacy.
             </p>
           </article>
@@ -80,7 +80,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Tamper-Evident Ledger
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Matching results and policy versions are hash-chained in an immutable ledger, preventing retroactive alteration of data.
             </p>
           </article>
@@ -98,7 +98,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Policy Versioning
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Track every change to allocation criteria. Rerun historical matches against old policies to verify consistency.
             </p>
           </article>
@@ -113,7 +113,7 @@ export function Capabilities() {
             <h3 className="text-[18px] lg:text-[19px] xl:text-[21px] tracking-[-0.45px] leading-[1.3] m-0 mb-[18px] font-[760]">
               Independent Verification
             </h3>
-            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] color-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
+            <p className="text-[14px] lg:text-[15px] xl:text-[16px] leading-[1.6] lg:leading-[1.65] text-[#4f6079] m-0 max-w-none sm:max-w-[390px]">
               Third-party auditors can cryptographically witness matching runs without ever seeing sensitive patient data.
             </p>
           </article>
