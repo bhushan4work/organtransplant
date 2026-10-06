@@ -10,7 +10,7 @@ export function WorkspaceNavbar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex flex-col w-[248px] xl:w-[248px] lg:w-[224px] max-lg:-translate-x-full lg:translate-x-0 p-[23px_15px_17px] bg-white border-r border-[#e2e8f0] transition-transform duration-200 ease-in-out">
       
-      <Link href="/workspace" className="flex items-center gap-[10px] px-[9px] pb-[27px]" aria-label="OrganTrust workspace home">
+      <Link href="/" className="flex items-center gap-[10px] px-[9px] pb-[27px]" aria-label="OrganTrust workspace home">
         <span className="w-[37px] h-[37px] grid place-items-center rounded-[11px] text-white bg-[#97002f] shadow-[0_6px_14px_rgba(151,0,47,.15)]">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 2.8 20 6v5.7c0 4.7-3.2 7.9-8 9.5-4.8-1.6-8-4.8-8-9.5V6l8-3.2Z" stroke="currentColor" strokeWidth="1.7"/>
