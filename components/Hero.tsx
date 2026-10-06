@@ -32,13 +32,13 @@ export function Hero() {
                 <path d="M5 12h14M13 5l7 7-7 7" />
               </svg>
             </Link>
-            <button type="button" className="min-h-[57px] sm:min-h-[61px] md:min-h-[77px] w-full sm:w-auto sm:min-w-[215px] md:min-w-[255px] inline-flex items-center justify-center gap-[11px] px-[23px] md:px-[37px] rounded-[13px] md:rounded-[15px] bg-white text-[#111a2e] border border-[#dfe7f0] text-[16px] md:text-[18px] font-[690] shadow-[0_1px_2px_rgba(13,27,48,0.025)] hover:-translate-y-[2px] hover:border-[#b8c5d5] transition-all duration-180 cursor-pointer">
+            <Link href="/workspace" className="min-h-[57px] sm:min-h-[61px] md:min-h-[77px] w-full sm:w-auto sm:min-w-[215px] md:min-w-[255px] inline-flex items-center justify-center gap-[11px] px-[23px] md:px-[37px] rounded-[13px] md:rounded-[15px] bg-white text-[#111a2e] border border-[#dfe7f0] text-[16px] md:text-[18px] font-[690] shadow-[0_1px_2px_rgba(13,27,48,0.025)] hover:-translate-y-[2px] hover:border-[#b8c5d5] transition-all duration-180 cursor-pointer">
               View Live Demo 
               <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2.3">
                 <circle cx="12" cy="12" r="9.5" />
                 <path d="m10 8 6 4-6 4V8Z" fill="currentColor" stroke="none" />
               </svg>
-            </button>
+            </Link>
           </div>
           
           <div className="mt-[30px] sm:mt-[38px] md:mt-[63px] flex flex-wrap items-center gap-[17px] sm:gap-x-[27px] sm:gap-y-[19px] md:gap-x-[18px] lg:gap-[clamp(24px,3vw,45px)] text-[#858585] text-[11px] sm:text-[13px] md:text-[12px] lg:text-[15px] font-[730]" aria-label="Platform principles">
