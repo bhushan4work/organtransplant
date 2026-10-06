@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
-    <>
+    <div style={{ zoom: 0.9 }}>
       <Navbar />
       <main>
         <Hero />
@@ -16,6 +16,6 @@ export default function Home() {
         <FAQ />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
