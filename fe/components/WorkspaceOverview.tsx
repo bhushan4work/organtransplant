@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 
 export function WorkspaceOverview() {
+  const router = useRouter();
+
   const [data, setData] = useState<any>(null);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
@@ -107,8 +110,11 @@ export function WorkspaceOverview() {
           </div>
           <button onClick={async () => {
             try {
-              const res = await api.sim.runMatch({ offer_id: 1 });
-              alert(`Match successful! Output hash: ${res.output_hash}\nMatches: ${res.total_candidates}`);
+              const offers = await api.offers.list();
+              const active = offers.find((o: any) => o.status === 'ACTIVE');
+              if (!active) throw new Error('No active offers found to match');
+              const res = await api.matches.runMatch(active.id);
+              router.push(`/workspace/runs/${res.match_run_id}`);
             } catch (err: any) {
               alert(`Match failed: ${err.message}`);
             }

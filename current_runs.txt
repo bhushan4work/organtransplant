@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { api } from '../lib/api';
 
 
@@ -13,8 +12,6 @@ const getStatusClass = (status: string) => {
 };
 
 export function WorkspaceRuns() {
-  const router = useRouter();
-
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [runsData, setRunsData] = useState<any[]>([]);
@@ -202,7 +199,7 @@ export function WorkspaceRuns() {
                       </span>
                     </td>
                     <td className="p-[12px] md:p-[13px_16px] border-b border-[#eef1f5] text-right">
-                      <button onClick={() => router.push(`/workspace/runs/${r.id.split('-')[2]}`)} className="border-0 bg-transparent text-[#97002f] font-[750] text-[11px] p-0 hover:text-[#760025] cursor-pointer invisible group-hover:visible">
+                      <button className="border-0 bg-transparent text-[#97002f] font-[750] text-[11px] p-0 hover:text-[#760025] cursor-pointer invisible group-hover:visible">
                         Inspect
                       </button>
                     </td>

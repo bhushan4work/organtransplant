@@ -49,7 +49,7 @@ export function WorkspaceAudit() {
             title: a.action.replace(/_/g, ' '),
             desc: a.payload ? JSON.stringify(a.payload).slice(0, 50) + '...' : 'System event',
             hash: a.event_hash ? `sha256:${a.event_hash.slice(0,10)}...` : 'N/A',
-            time: new Date(a.timestamp).toLocaleString(),
+            time: new Date(a.timestamp).toLocaleString(), seq: a.sequence,
             run: a.entity_id ? `${a.entity_type.slice(0,3)}-${a.entity_id}` : 'SYS-EVT'
           };
         });
@@ -201,11 +201,21 @@ export function WorkspaceAudit() {
                     {a.hash}
                   </span>
                 </div>
-                <div className="text-[#287f7b] text-[10px] font-[800] flex items-center justify-end gap-[5px] ml-auto">
+                <button onClick={async () => {
+                  try {
+                    const res = await api.audit.proof(a.seq);
+                    alert(`Proof for seq ${a.seq}:
+Hash: ${res.event_hash}
+Valid: ${res.valid}
+Previous: ${res.previous_hash}`);
+                  } catch (e: any) {
+                    alert('Proof fetch failed: ' + e.message);
+                  }
+                }} className="text-[#287f7b] hover:text-[#1b5855] cursor-pointer border-0 bg-transparent text-[10px] font-[800] flex items-center justify-end gap-[5px] ml-auto">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
                     <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg> Verified
-                </div>
+                  </svg> View Proof
+                </button>
               </div>
             ))
           ) : (
