@@ -4,7 +4,7 @@ from datetime import datetime
 
 class IdentityBase(BaseModel):
     name: str = Field(..., min_length=1)
-    dob: str = Field(..., description="YYYY-MM-DD")
+    dob: str = Field(..., description="YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$")
     identifier: str = Field(..., min_length=4)
     hospital_id: int
 

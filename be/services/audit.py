@@ -8,7 +8,8 @@ from cryptography.hazmat.primitives import serialization
 from db.models import AuditEvent, Checkpoint
 
 def get_signing_key():
-    hex_key = os.getenv("AUDIT_SIGNING_KEY_HEX")
+    from core.config import settings
+    hex_key = getattr(settings, "AUDIT_SIGNING_KEY_HEX", None) or os.getenv("AUDIT_SIGNING_KEY_HEX")
     if hex_key:
         return ed25519.Ed25519PrivateKey.from_private_bytes(bytes.fromhex(hex_key))
     

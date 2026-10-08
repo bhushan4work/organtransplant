@@ -39,7 +39,7 @@ def generate_data(seed: int):
     db.commit()
     
     # Now use TestClient to trigger the REST APIs (so audit ledger and crypto are perfectly generated)
-    client = TestClient(app)
+    client = TestClient(app, base_url="https://testserver")
     
     def switch_user(email, password):
         client.post("/api/v1/auth/login", json={"email": email, "password": password})
@@ -71,7 +71,11 @@ def generate_data(seed: int):
         "hospital_id": h1.id,
         "organ_type": "KIDNEY"
     })
-    d_ot_id = d_resp.json()["ot_id"]
+    try:
+        d_ot_id = d_resp.json()["ot_id"]
+    except KeyError:
+        print(f"Failed to create donor: {d_resp.text}")
+        raise
     
     # Donor Lab
     switch_user("lab@golden.edu", "lab123")
