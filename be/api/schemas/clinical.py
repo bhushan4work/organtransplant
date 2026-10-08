@@ -33,3 +33,8 @@ class HLATyping(BaseModel):
 class LabDataCreate(BaseModel):
     blood_type: str = Field(..., description="ABO Blood Type")
     hla_data: HLATyping
+
+class DecisionCreate(BaseModel):
+    waitlist_entry_id: int
+    action: str = Field(..., pattern="^(ACCEPT|DECLINE)$")
+    reason_code: str

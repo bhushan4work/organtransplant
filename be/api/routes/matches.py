@@ -4,8 +4,9 @@ from datetime import datetime
 import yaml
 
 from db.database import get_db
-from db.models import User, Offer, WaitlistEntry, CompatibilityProfile, PolicyVersion, MatchRun, Candidate, AuditEvent
+from db.models import User, Offer, WaitlistEntry, CompatibilityProfile, PolicyVersion, MatchRun, Candidate, AuditEvent, Decision
 from api.dependencies import RoleChecker, get_current_user
+from api.schemas.clinical import DecisionCreate
 from matching_engine.engine import run_match
 
 router = APIRouter()
@@ -196,3 +197,79 @@ def get_match_run(
             } for c in candidates if c.excluded
         ]
     }
+
+@router.post("/runs/{run_id}/decisions", status_code=status.HTTP_201_CREATED)
+def make_decision(
+    run_id: int,
+    decision_in: DecisionCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(RoleChecker(["CLINICIAN"]))
+):
+    now = datetime.utcnow()
+    
+    # Check if run exists
+    run = db.query(MatchRun).filter(MatchRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Match run not found")
+        
+    # Verify candidate was actually in this run
+    candidate = db.query(Candidate).filter(
+        Candidate.match_run_id == run_id,
+        Candidate.waitlist_entry_id == decision_in.waitlist_entry_id
+    ).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found in this match run")
+        
+    # Load Waitlist Entry
+    entry = db.query(WaitlistEntry).filter(WaitlistEntry.id == decision_in.waitlist_entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Waitlist entry not found")
+        
+    # Scoping check: can this clinician decide for this waitlist entry?
+    if user.role.value != "ADMIN" and entry.hospital_id != user.hospital_id:
+        raise HTTPException(status_code=403, detail="Not authorized to make decisions for this patient")
+        
+    # Safety Gate for ACCEPT
+    if decision_in.action == "ACCEPT":
+        profile = db.query(CompatibilityProfile).filter(CompatibilityProfile.ot_id == entry.ot_id).first()
+        if not profile:
+            raise HTTPException(status_code=400, detail="Missing compatibility profile")
+            
+        crossmatch_status = profile.hla_typing.get("crossmatch_status")
+        if crossmatch_status != "NEGATIVE":
+            raise HTTPException(status_code=400, detail="Cannot accept: Crossmatch is not explicitly NEGATIVE")
+            
+    try:
+        # Create Decision
+        decision = Decision(
+            match_run_id=run_id,
+            waitlist_entry_id=decision_in.waitlist_entry_id,
+            action=decision_in.action,
+            reason_code=decision_in.reason_code,
+            decided_by=user.id,
+            timestamp=now
+        )
+        db.add(decision)
+        db.flush()
+        
+        import hashlib
+        payload = f"{run_id}:{decision_in.waitlist_entry_id}:{decision_in.action}:{decision_in.reason_code}"
+        payload_hash = hashlib.sha256(payload.encode()).hexdigest()
+        
+        # Create Audit Event
+        audit = AuditEvent(
+            entity_type="DECISION",
+            entity_id=str(decision.id),
+            action="DECISION_MADE",
+            actor_id=user.id,
+            timestamp=now,
+            payload_hash=payload_hash
+        )
+        db.add(audit)
+        
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error saving decision")
+        
+    return {"message": "Decision recorded successfully", "decision_id": decision.id}

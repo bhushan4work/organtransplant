@@ -146,10 +146,14 @@ class Decision(Base):
     __table_args__ = {'schema': 'matching'}
     
     id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey("matching.candidates.id"), nullable=False)
-    status = Column(String, nullable=False) 
-    reason = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    match_run_id = Column(Integer, ForeignKey("matching.match_runs.id"), nullable=False)
+    waitlist_entry_id = Column(Integer, ForeignKey("clinical.waitlist_entries.id"), nullable=False)
+    
+    action = Column(String, nullable=False) # ACCEPTED, DECLINED
+    reason_code = Column(String, nullable=False)
+    decided_by = Column(Integer, ForeignKey("identity_vault.users.id"), nullable=False)
+    
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
 # ==========================================
 # AUDIT SCHEMA

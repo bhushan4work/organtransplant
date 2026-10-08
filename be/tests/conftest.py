@@ -45,6 +45,16 @@ def setup_db():
         is_active=True
     )
     db.add(user)
+    
+    clinician = User(
+        email="clinician@organtrust.com",
+        hashed_password=get_password_hash("securepassword"),
+        role=Role.CLINICIAN,
+        hospital_id=1,
+        is_active=True
+    )
+    db.add(clinician)
+    
     db.commit()
     
     yield
@@ -54,3 +64,5 @@ def setup_db():
 def client(setup_db):
     with TestClient(app, base_url="https://testserver") as c:
         yield c
+
+# Append another user to db in conftest?

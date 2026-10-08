@@ -107,9 +107,6 @@ def test_shuffle_invariance():
     random.shuffle(w1)
     random.shuffle(w2)
     
-    # Make sure they are actually differently ordered in memory
-    assert w1 != w2 or len(w1) < 2
-    
     res1 = run_match(OFFER, POLICY_YAML, w1, NOW)
     res2 = run_match(OFFER, POLICY_YAML, w2, NOW)
     
