@@ -274,3 +274,55 @@ def make_decision(
         raise HTTPException(status_code=500, detail="Database error saving decision")
         
     return {"message": "Decision recorded successfully", "decision_id": decision.id}
+
+@router.post("/runs/{run_id}/replay", status_code=status.HTTP_200_OK)
+def replay_match(
+    run_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(RoleChecker(["AUDITOR", "ADMIN"]))
+):
+    run = db.query(MatchRun).filter(MatchRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Match run not found")
+        
+    policy = db.query(PolicyVersion).filter(PolicyVersion.id == run.policy_version_id).first()
+    if not policy:
+        raise HTTPException(status_code=400, detail="Policy not found")
+        
+    policy_yaml = yaml.dump(policy.rules)
+    
+    snapshot = run.input_snapshot
+    offer_dict = snapshot.get("offer", {})
+    waitlist_dicts = snapshot.get("waitlist", [])
+    
+    try:
+        from matching_engine.engine import run_match
+        # run.run_time is naive datetime in python if sqlite, but we might need it.
+        # It's exactly the datetime used originally.
+        match_result = run_match(offer_dict, policy_yaml, waitlist_dicts, run.run_time)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Replay failed to execute: {str(e)}")
+        
+    verified = (
+        match_result["output_hash"] == run.output_hash and 
+        match_result["engine_version"] == run.engine_version
+    )
+    
+    if not verified:
+        raise HTTPException(
+            status_code=400, 
+            detail={
+                "error": "Replay verification failed",
+                "expected_hash": run.output_hash,
+                "actual_hash": match_result["output_hash"],
+                "expected_engine": run.engine_version,
+                "actual_engine": match_result["engine_version"]
+            }
+        )
+        
+    return {
+        "run_id": run.id,
+        "verified": verified,
+        "output_hash": match_result["output_hash"],
+        "engine_version": match_result["engine_version"]
+    }

@@ -49,3 +49,19 @@ def read_identity(
         "dob": decrypt_identity(person.encrypted_dob),
         "identifier": decrypt_identity(person.encrypted_identifier)
     }
+
+from services.audit import verify_chain, generate_proof
+
+@router.get("/verify", status_code=status.HTTP_200_OK)
+def verify_audit_ledger(db: Session = Depends(get_db)):
+    result = verify_chain(db)
+    if not result["valid"]:
+        raise HTTPException(status_code=400, detail=result)
+    return result
+
+@router.get("/proof/{seq}", status_code=status.HTTP_200_OK)
+def get_inclusion_proof(seq: int, db: Session = Depends(get_db)):
+    proof = generate_proof(db, seq)
+    if not proof:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return proof
