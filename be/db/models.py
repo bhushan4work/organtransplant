@@ -1,109 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Float, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Float, Enum, JSON, Text
+from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 import enum
 from db.database import Base
-
-class BloodType(str, enum.Enum):
-    A_PLUS = "A+"
-    A_MINUS = "A-"
-    B_PLUS = "B+"
-    B_MINUS = "B-"
-    AB_PLUS = "AB+"
-    AB_MINUS = "AB-"
-    O_PLUS = "O+"
-    O_MINUS = "O-"
-
-class OrganType(str, enum.Enum):
-    KIDNEY = "KIDNEY"
-    LIVER = "LIVER"
-    HEART = "HEART"
-    LUNG = "LUNG"
-    PANCREAS = "PANCREAS"
-
-class MatchStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    ACCEPTED = "ACCEPTED"
-    REJECTED = "REJECTED"
-    COMPLETED = "COMPLETED"
-
-class PatientStatus(str, enum.Enum):
-    WAITING = "WAITING"
-    MATCHED = "MATCHED"
-    TRANSPLANTED = "TRANSPLANTED"
-    DECEASED = "DECEASED"
-
-class Hospital(Base):
-    __tablename__ = "hospitals"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-    location = Column(String, nullable=False)
-    contact_email = Column(String, unique=True, index=True, nullable=False)
-
-    donors = relationship("Donor", back_populates="hospital")
-    recipients = relationship("Recipient", back_populates="hospital")
-
-class Donor(Base):
-    __tablename__ = "donors"
-
-    id = Column(Integer, primary_key=True, index=True)
-    hospital_id = Column(Integer, ForeignKey("hospitals.id"))
-    
-    organ_type = Column(Enum(OrganType), nullable=False)
-    blood_type = Column(Enum(BloodType), nullable=False)
-    hla_type = Column(String, nullable=False) # Simplified HLA representation
-    
-    status = Column(Enum(PatientStatus), default=PatientStatus.WAITING)
-    registered_at = Column(DateTime, default=datetime.utcnow)
-
-    hospital = relationship("Hospital", back_populates="donors")
-    matches = relationship("Match", back_populates="donor")
-
-class Recipient(Base):
-    __tablename__ = "recipients"
-
-    id = Column(Integer, primary_key=True, index=True)
-    hospital_id = Column(Integer, ForeignKey("hospitals.id"))
-    
-    organ_type = Column(Enum(OrganType), nullable=False)
-    blood_type = Column(Enum(BloodType), nullable=False)
-    hla_type = Column(String, nullable=False)
-    
-    urgency_score = Column(Float, nullable=False) # e.g., MELD score for liver
-    
-    status = Column(Enum(PatientStatus), default=PatientStatus.WAITING)
-    registered_at = Column(DateTime, default=datetime.utcnow)
-
-    hospital = relationship("Hospital", back_populates="recipients")
-    matches = relationship("Match", back_populates="recipient")
-
-class Match(Base):
-    __tablename__ = "matches"
-
-    id = Column(Integer, primary_key=True, index=True)
-    donor_id = Column(Integer, ForeignKey("donors.id"))
-    recipient_id = Column(Integer, ForeignKey("recipients.id"))
-    
-    match_score = Column(Float, nullable=False)
-    status = Column(Enum(MatchStatus), default=MatchStatus.PENDING)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    donor = relationship("Donor", back_populates="matches")
-    recipient = relationship("Recipient", back_populates="matches")
-
-class LedgerEntry(Base):
-    __tablename__ = "ledger"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    entity_type = Column(String, nullable=False) # e.g., "MATCH", "DONOR"
-    entity_id = Column(Integer, nullable=False)
-    action = Column(String, nullable=False) # e.g., "CREATED", "STATUS_CHANGED"
-    
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    payload_hash = Column(String, nullable=False) # cryptographic hash of the data for trust
 
 class Role(str, enum.Enum):
     COORDINATOR = "COORDINATOR"
@@ -112,21 +11,149 @@ class Role(str, enum.Enum):
     AUDITOR = "AUDITOR"
     ADMIN = "ADMIN"
 
+# ==========================================
+# IDENTITY VAULT SCHEMA
+# ==========================================
+class Hospital(Base):
+    __tablename__ = "hospitals"
+    __table_args__ = {'schema': 'identity_vault'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    location = Column(String)
+
 class User(Base):
     __tablename__ = "users"
-
+    __table_args__ = {'schema': 'identity_vault'}
+    
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(Role), nullable=False)
-    hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=True) # None for Admin/Auditor
+    hospital_id = Column(Integer, ForeignKey("identity_vault.hospitals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
-
-    hospital = relationship("Hospital")
 
 class TokenBlocklist(Base):
     __tablename__ = "token_blocklist"
-
+    __table_args__ = {'schema': 'identity_vault'}
+    
     id = Column(Integer, primary_key=True, index=True)
     jti = Column(String, unique=True, index=True, nullable=False)
     revoked_at = Column(DateTime, default=datetime.utcnow)
+
+class Person(Base):
+    __tablename__ = "persons"
+    __table_args__ = {'schema': 'identity_vault'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    encrypted_name = Column(String, nullable=False) 
+    encrypted_dob = Column(String, nullable=False)
+    encrypted_identifier = Column(String, nullable=False) # e.g. SSN
+
+class Pseudonym(Base):
+    __tablename__ = "pseudonyms"
+    __table_args__ = {'schema': 'identity_vault'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    person_id = Column(Integer, ForeignKey("identity_vault.persons.id"), nullable=False)
+    ot_id = Column(String, unique=True, index=True, nullable=False) # Stable OT-ID generated via HMAC
+
+# ==========================================
+# CLINICAL SCHEMA
+# ==========================================
+class Offer(Base):
+    __tablename__ = "offers"
+    __table_args__ = {'schema': 'clinical'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ot_id = Column(String, index=True, nullable=False)
+    organ_type = Column(String, nullable=False)
+    hospital_id = Column(Integer, ForeignKey("identity_vault.hospitals.id"), nullable=False)
+    status = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class WaitlistEntry(Base):
+    __tablename__ = "waitlist_entries"
+    __table_args__ = {'schema': 'clinical'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ot_id = Column(String, index=True, nullable=False)
+    organ_type = Column(String, nullable=False)
+    urgency_score = Column(Float, nullable=False)
+    hospital_id = Column(Integer, ForeignKey("identity_vault.hospitals.id"), nullable=False)
+    status = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class CompatibilityProfile(Base):
+    __tablename__ = "compatibility_profiles"
+    __table_args__ = {'schema': 'clinical'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ot_id = Column(String, unique=True, index=True, nullable=False)
+    blood_type = Column(String, nullable=False)
+    hla_typing = Column(JSON, nullable=False) 
+
+# ==========================================
+# MATCHING SCHEMA
+# ==========================================
+class PolicyVersion(Base):
+    __tablename__ = "policy_versions"
+    __table_args__ = {'schema': 'matching'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String, nullable=False)
+    rules = Column(JSON, nullable=False)
+    active = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class MatchRun(Base):
+    __tablename__ = "match_runs"
+    __table_args__ = {'schema': 'matching'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    offer_id = Column(Integer, ForeignKey("clinical.offers.id"), nullable=False)
+    policy_version_id = Column(Integer, ForeignKey("matching.policy_versions.id"), nullable=False)
+    run_time = Column(DateTime, default=datetime.utcnow)
+
+class Candidate(Base):
+    __tablename__ = "candidates"
+    __table_args__ = {'schema': 'matching'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    match_run_id = Column(Integer, ForeignKey("matching.match_runs.id"), nullable=False)
+    waitlist_entry_id = Column(Integer, ForeignKey("clinical.waitlist_entries.id"), nullable=False)
+    score = Column(Float, nullable=False)
+    rank = Column(Integer, nullable=False)
+
+class Decision(Base):
+    __tablename__ = "decisions"
+    __table_args__ = {'schema': 'matching'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(Integer, ForeignKey("matching.candidates.id"), nullable=False)
+    status = Column(String, nullable=False) 
+    reason = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+# ==========================================
+# AUDIT SCHEMA
+# ==========================================
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+    __table_args__ = {'schema': 'audit'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    entity_type = Column(String, nullable=False)
+    entity_id = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    actor_id = Column(Integer, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    payload_hash = Column(String, nullable=False)
+
+class Checkpoint(Base):
+    __tablename__ = "checkpoints"
+    __table_args__ = {'schema': 'audit'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    hash_value = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)

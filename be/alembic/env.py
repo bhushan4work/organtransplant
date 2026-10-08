@@ -4,6 +4,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+import sqlalchemy as sa
 
 from alembic import context
 
@@ -56,8 +57,16 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS identity_vault"))
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS clinical"))
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS matching"))
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS audit"))
+        connection.commit()
+
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, 
+            target_metadata=target_metadata,
+            include_schemas=True
         )
 
         with context.begin_transaction():

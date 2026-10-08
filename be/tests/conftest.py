@@ -31,6 +31,9 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="module")
 def setup_db():
+    # SQLite doesn't support schemas in the same way, clear them for tests
+    for table in Base.metadata.tables.values():
+        table.schema = None
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     
