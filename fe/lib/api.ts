@@ -41,6 +41,7 @@ export const api = {
   auth: {
     login: (data: any) => fetchAPI('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
     logout: () => fetchAPI('/auth/logout', { method: 'POST' }),
+    refresh: () => fetchAPI('/auth/refresh', { method: 'POST' }),
     me: () => fetchAPI('/auth/me', { method: 'GET' }),
   },
   donors: {

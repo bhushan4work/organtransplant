@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Verifiable Organ Transplant Matching",
 };
 
+import { AuthProvider } from "@/lib/AuthContext";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -24,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -3,9 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '../lib/AuthContext';
 
 export function WorkspaceNavbar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const role = user?.role || '';
+
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex flex-col w-[248px] xl:w-[248px] lg:w-[224px] max-lg:-translate-x-full lg:translate-x-0 p-[23px_15px_17px] bg-white border-r border-[#e2e8f0] transition-transform duration-200 ease-in-out">
@@ -37,6 +41,7 @@ export function WorkspaceNavbar() {
           Overview
         </Link>
         
+        {['ADMIN', 'COORDINATOR', 'CLINICIAN', 'AUDITOR', 'HLA_LAB'].includes(role) && (
         <Link href="/workspace/runs" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/runs' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
           <svg className={`flex-none ${pathname === '/workspace/runs' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5Z" stroke="currentColor" strokeWidth="1.7"/>
@@ -45,7 +50,9 @@ export function WorkspaceNavbar() {
           Matching runs 
           <span className={`ml-auto rounded-[7px] p-[2px_7px] text-[10px] font-[800] ${pathname === '/workspace/runs' ? 'text-[#8e002c] bg-[#ffe0e9]' : 'text-[#8e002c] bg-[#ffe0e9]'}`}>12</span>
         </Link>
+        )}
 
+        {['ADMIN', 'COORDINATOR', 'CLINICIAN'].includes(role) && (
         <Link href="/workspace/recipients" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/recipients' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
           <svg className={`flex-none ${pathname === '/workspace/recipients' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <circle cx="9" cy="7.5" r="3.5" stroke="currentColor" strokeWidth="1.7"/>
@@ -54,7 +61,9 @@ export function WorkspaceNavbar() {
           Recipient queue 
           <span className={`ml-auto rounded-[7px] p-[2px_7px] text-[10px] font-[800] ${pathname === '/workspace/recipients' ? 'text-[#8e002c] bg-[#ffe0e9]' : 'text-[#8e002c] bg-[#ffe0e9]'}`}>24</span>
         </Link>
+        )}
 
+        {['ADMIN', 'AUDITOR'].includes(role) && (
         <Link href="/workspace/policies" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/policies' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
           <svg className={`flex-none ${pathname === '/workspace/policies' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <path d="M12 3.3 19 6v5c0 4.2-2.7 7.3-7 9.1C7.7 18.3 5 15.2 5 11V6l7-2.7Z" stroke="currentColor" strokeWidth="1.7"/>
@@ -62,7 +71,9 @@ export function WorkspaceNavbar() {
           </svg> 
           Policy rules
         </Link>
+        )}
 
+        {['ADMIN', 'AUDITOR'].includes(role) && (
         <Link href="/workspace/audit" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/audit' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
           <svg className={`flex-none ${pathname === '/workspace/audit' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
             <path d="M8 4.5H5.5A1.5 1.5 0 0 0 4 6v13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19V6a1.5 1.5 0 0 0-1.5-1.5H16" stroke="currentColor" strokeWidth="1.7"/>
@@ -71,30 +82,35 @@ export function WorkspaceNavbar() {
           </svg> 
           Audit ledger
         </Link>
+        )}
       </nav>
       
-      <div className="px-[11px] mt-[24px] mb-[9px] uppercase text-[10px] tracking-[1.05px] text-[#8b98aa] font-[800]">
-        Administration
-      </div>
-      
-      <nav className="flex flex-col gap-[4px]">
-        <Link href="/workspace/integrations" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/integrations' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
-          <svg className={`flex-none ${pathname === '/workspace/integrations' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
-            <rect x="3.5" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
-            <rect x="14" y="13.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
-            <path d="M10 7.3h2.5a2 2 0 0 1 2 2v4.2M7 10.5v4a2 2 0 0 0 2 2h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-          </svg> 
-          Integrations
-        </Link>
-        
-        <Link href="/workspace/settings" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/settings' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
-          <svg className={`flex-none ${pathname === '/workspace/settings' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
-            <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" stroke="currentColor" strokeWidth="1.7"/>
-            <path d="m19.4 13.9 1.1.8-1.7 3-1.3-.5a7.8 7.8 0 0 1-1.6.9l-.2 1.4h-3.4l-.2-1.4a7.8 7.8 0 0 1-1.6-.9l-1.3.5-1.7-3 1.1-.8a7 7 0 0 1 0-1.8l-1.1-.8 1.7-3 1.3.5a7.8 7.8 0 0 1 1.6-.9l.2-1.4h3.4l.2 1.4a7.8 7.8 0 0 1 1.6.9l1.3-.5 1.7 3-1.1.8a7 7 0 0 1 0 1.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" transform="translate(-1.6 -1.5)"/>
-          </svg> 
-          Settings
-        </Link>
-      </nav>
+      {['ADMIN'].includes(role) && (
+      <>
+        <div className="px-[11px] mt-[24px] mb-[9px] uppercase text-[10px] tracking-[1.05px] text-[#8b98aa] font-[800]">
+                Administration
+              </div>
+              
+              <nav className="flex flex-col gap-[4px]">
+                <Link href="/workspace/integrations" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/integrations' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
+                  <svg className={`flex-none ${pathname === '/workspace/integrations' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
+                    <rect x="3.5" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
+                    <rect x="14" y="13.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.7"/>
+                    <path d="M10 7.3h2.5a2 2 0 0 1 2 2v4.2M7 10.5v4a2 2 0 0 0 2 2h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+                  </svg> 
+                  Integrations
+                </Link>
+                
+                <Link href="/workspace/settings" className={`flex items-center gap-[12px] w-full p-[11px_12px] rounded-[11px] text-left font-[650] text-[13px] transition-colors duration-150 cursor-pointer ${pathname === '/workspace/settings' ? 'text-[#97002f] bg-[#fff0f4]' : 'text-[#526178] hover:bg-[#f8f9fc] hover:text-[#172236] bg-transparent group'}`}>
+                  <svg className={`flex-none ${pathname === '/workspace/settings' ? 'text-[#97002f]' : 'text-[#7b899b] group-hover:text-[#526178]'}`} width="17" height="17" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" stroke="currentColor" strokeWidth="1.7"/>
+                    <path d="m19.4 13.9 1.1.8-1.7 3-1.3-.5a7.8 7.8 0 0 1-1.6.9l-.2 1.4h-3.4l-.2-1.4a7.8 7.8 0 0 1-1.6-.9l-1.3.5-1.7-3 1.1-.8a7 7 0 0 1 0-1.8l-1.1-.8 1.7-3 1.3.5a7.8 7.8 0 0 1 1.6-.9l.2-1.4h3.4l.2 1.4a7.8 7.8 0 0 1 1.6.9l1.3-.5 1.7 3-1.1.8a7 7 0 0 1 0 1.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" transform="translate(-1.6 -1.5)"/>
+                  </svg> 
+                  Settings
+                </Link>
+              </nav>
+      </>
+      )}
 
       <div className="flex-1"></div>
 
@@ -115,20 +131,20 @@ export function WorkspaceNavbar() {
       </div>
 
       <div className="flex items-center gap-[10px] p-[14px_7px_0] border-t border-[#e2e8f0]">
-        <div className="w-[34px] h-[34px] flex-none grid place-items-center rounded-full bg-[#f6dce5] text-[#8d163c] text-[11px] font-[800]">
-          SC
+        <div className="w-[34px] h-[34px] flex-none grid place-items-center rounded-full bg-[#f6dce5] text-[#8d163c] text-[11px] font-[800] uppercase">
+          {user?.email?.slice(0, 2) || 'U'}
         </div>
-        <div>
-          <div className="font-[750] text-[12px] text-[#172236]">Dr. Sarah Chen</div>
-          <div className="text-[#62728a] text-[10px] mt-[1px]">Clinical coordinator</div>
+        <div className="overflow-hidden">
+          <div className="font-[750] text-[12px] text-[#172236] truncate">{user?.email || 'User'}</div>
+          <div className="text-[#62728a] text-[10px] mt-[1px] capitalize">{role.toLowerCase().replace('_', ' ')}</div>
         </div>
-        <div className="ml-auto text-[#8b98aa]">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="5" cy="12" r="1.5"/>
-            <circle cx="12" cy="12" r="1.5"/>
-            <circle cx="19" cy="12" r="1.5"/>
+        <button onClick={() => logout()} className="ml-auto text-[#8b98aa] hover:text-[#97002f] transition-colors" title="Logout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-        </div>
+        </button>
       </div>
 
     </aside>

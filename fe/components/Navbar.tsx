@@ -3,22 +3,50 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api } from '../lib/api';
+import { useAuth } from '../lib/AuthContext';
+
+import { LoginModal } from "./LoginModal";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const router = useRouter();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [email, setEmail] = useState('coord@golden.edu');
+  const [password, setPassword] = useState('coord123');
+  const { login, error, clearError, setError } = useAuth();
 
-  const handleSignIn = async (e: React.MouseEvent) => {
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get('error');
+    if (err) {
+      setIsLoginModalOpen(true);
+      if (err === 'unauthorized') {
+        setError('Please sign in to access this page');
+      } else if (err === 'expired') {
+        setError('Your session has expired. Please sign in again');
+      }
+      // Remove error from URL without reloading
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [setError]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.auth.login({ email: "coord@golden.edu", password: "coord123" });
-      router.push('/workspace');
+      await login({ email, password });
     } catch (err) {
       console.error('Login failed:', err);
-      // For demo purposes, we can still redirect
-      router.push('/workspace');
     }
+  };
+
+  const openLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoginModalOpen(true);
+    clearError();
+  };
+
+  const closeLogin = () => {
+    setIsLoginModalOpen(false);
+    clearError();
   };
 
   return (
@@ -46,10 +74,10 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-3.5 md:gap-[35px] whitespace-nowrap ml-auto lg:ml-0">
-          <a href="#" onClick={handleSignIn} className="hidden md:block text-[16px] font-[620] text-[#34445e] hover:text-[#8b0028]">
+          <a href="#" onClick={openLogin} className="hidden md:block text-[16px] font-[620] text-[#34445e] hover:text-[#8b0028]">
             Sign in
           </a>
-          <a href="#" onClick={handleSignIn} className="min-h-[43px] md:min-h-[50px] min-w-[99px] sm:min-w-[114px] md:min-w-[152px] inline-flex items-center justify-center rounded-full bg-[#8b0028] text-white font-[690] px-[12px] sm:px-[17px] md:px-[29px] text-[13px] sm:text-[14px] md:text-[16px] shadow-[0_8px_17px_rgba(72,0,24,0.12)] hover:-translate-y-[2px] hover:bg-[#760020] hover:shadow-[0_11px_22px_rgba(72,0,24,0.19)] transition-all duration-200">
+          <a href="#" onClick={openLogin} className="min-h-[43px] md:min-h-[50px] min-w-[99px] sm:min-w-[114px] md:min-w-[152px] inline-flex items-center justify-center rounded-full bg-[#8b0028] text-white font-[690] px-[12px] sm:px-[17px] md:px-[29px] text-[13px] sm:text-[14px] md:text-[16px] shadow-[0_8px_17px_rgba(72,0,24,0.12)] hover:-translate-y-[2px] hover:bg-[#760020] hover:shadow-[0_11px_22px_rgba(72,0,24,0.19)] transition-all duration-200">
             Get started
           </a>
           
@@ -77,9 +105,20 @@ export function Navbar() {
           <Link href="#features" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
           <Link href="#security" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Security</Link>
           <Link href="#documentation" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Documentation</Link>
-          <a href="#" onClick={handleSignIn} className="text-[#34445e] text-[16px] font-[620] md:hidden">Sign in</a>
+          <a href="#" onClick={openLogin} className="text-[#34445e] text-[16px] font-[620] md:hidden">Sign in</a>
         </div>
       )}
+
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={closeLogin} 
+        email={email} 
+        setEmail={setEmail} 
+        password={password} 
+        setPassword={setPassword} 
+        error={error} 
+        onSubmit={handleSignIn} 
+      />
     </header>
   );
 }

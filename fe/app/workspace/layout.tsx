@@ -1,11 +1,24 @@
 import React from 'react';
+'use client';
+
 import { WorkspaceNavbar } from '@/components/WorkspaceNavbar';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function WorkspaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading } = useAuth();
+  
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f8fb]">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f6f8fb] text-[#172236] font-sans" style={{ zoom: 1.1 }}>
       <WorkspaceNavbar />
