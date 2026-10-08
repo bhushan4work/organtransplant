@@ -129,15 +129,15 @@ def trigger_match(
             ))
             
         # Append to Audit Ledger
-        audit = AuditEvent(
+        from services.audit import append_audit_event
+        append_audit_event(
+            db,
+            actor_id=user.id,
             entity_type="MATCH_RUN",
             entity_id=str(db_run.id),
             action="MATCH_RUN_COMPLETED",
-            actor_id=user.id,
-            timestamp=now,
-            payload_hash=match_result["output_hash"]
+            payload={"output_hash": match_result["output_hash"]}
         )
-        db.add(audit)
         
         db.commit()
     except Exception as e:
@@ -252,20 +252,21 @@ def make_decision(
         db.add(decision)
         db.flush()
         
-        import hashlib
-        payload = f"{run_id}:{decision_in.waitlist_entry_id}:{decision_in.action}:{decision_in.reason_code}"
-        payload_hash = hashlib.sha256(payload.encode()).hexdigest()
-        
         # Create Audit Event
-        audit = AuditEvent(
+        from services.audit import append_audit_event
+        append_audit_event(
+            db,
+            actor_id=user.id,
             entity_type="DECISION",
             entity_id=str(decision.id),
             action="DECISION_MADE",
-            actor_id=user.id,
-            timestamp=now,
-            payload_hash=payload_hash
+            payload={
+                "run_id": run_id,
+                "waitlist_entry_id": decision_in.waitlist_entry_id,
+                "action": decision_in.action,
+                "reason_code": decision_in.reason_code
+            }
         )
-        db.add(audit)
         
         db.commit()
     except Exception as e:

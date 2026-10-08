@@ -40,6 +40,18 @@ def submit_lab_data(
             )
             db.add(profile)
             
+        db.flush()
+        
+        from services.audit import append_audit_event
+        append_audit_event(
+            db,
+            actor_id=user.id,
+            entity_type="LAB_DATA",
+            entity_id=str(profile.id),
+            action="LAB_RESULT_ENTERED",
+            payload={"ot_id": ot_id, "blood_type": lab_data.blood_type}
+        )
+        
         db.commit()
     except Exception as e:
         db.rollback()

@@ -162,18 +162,32 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
     __table_args__ = {'schema': 'audit'}
     
-    id = Column(Integer, primary_key=True, index=True)
+    sequence = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    actor_id = Column(Integer, nullable=True) # null for system events
     entity_type = Column(String, nullable=False)
     entity_id = Column(String, nullable=False)
     action = Column(String, nullable=False)
-    actor_id = Column(Integer, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    payload_hash = Column(String, nullable=False)
+    payload_commit = Column(Text, nullable=False) # JSON or hash string
+    previous_hash = Column(String, nullable=False)
+    event_hash = Column(String, nullable=False, unique=True)
 
 class Checkpoint(Base):
     __tablename__ = "checkpoints"
     __table_args__ = {'schema': 'audit'}
     
     id = Column(Integer, primary_key=True, index=True)
-    hash_value = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    sequence = Column(Integer, ForeignKey("audit.audit_events.sequence"), nullable=False)
+    merkle_root = Column(String, nullable=False)
+    signature = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+from sqlalchemy import event
+
+@event.listens_for(AuditEvent, 'before_update')
+def receive_before_update(mapper, connection, target):
+    raise Exception("Audit events are append-only. Updates are not allowed.")
+
+@event.listens_for(AuditEvent, 'before_delete')
+def receive_before_delete(mapper, connection, target):
+    raise Exception("Audit events are append-only. Deletions are not allowed.")

@@ -50,6 +50,17 @@ def login(login_data: LoginRequest, response: Response, db: Session = Depends(ge
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
     
+    from services.audit import append_audit_event
+    append_audit_event(
+        db,
+        actor_id=user.id,
+        entity_type="USER",
+        entity_id=str(user.id),
+        action="LOGIN",
+        payload={"email": user.email}
+    )
+    db.commit()
+    
     return {"message": "Successfully logged in", "role": user.role.value}
 
 @router.post("/refresh")

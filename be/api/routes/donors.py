@@ -48,6 +48,17 @@ def register_donor(
             ot_id=ot_id
         )
         db.add(new_pseudo)
+        
+        from services.audit import append_audit_event
+        append_audit_event(
+            db,
+            actor_id=user.id,
+            entity_type="DONOR",
+            entity_id=ot_id,
+            action="DONOR_REGISTERED",
+            payload={"hospital_id": donor_in.hospital_id, "organ_type": donor_in.organ_type}
+        )
+        
         db.commit()
     except Exception as e:
         db.rollback()
@@ -70,6 +81,18 @@ def create_offer(
         status=offer_in.status
     )
     db.add(new_offer)
+    db.flush()
+    
+    from services.audit import append_audit_event
+    append_audit_event(
+        db,
+        actor_id=user.id,
+        entity_type="OFFER",
+        entity_id=str(new_offer.id),
+        action="OFFER_CREATED",
+        payload={"ot_id": offer_in.ot_id, "organ_type": offer_in.organ_type, "hospital_id": offer_in.hospital_id}
+    )
+    
     db.commit()
     db.refresh(new_offer)
     

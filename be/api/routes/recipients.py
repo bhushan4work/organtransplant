@@ -48,6 +48,18 @@ def register_recipient(
             status="WAITING"
         )
         db.add(waitlist_entry)
+        db.flush()
+        
+        from services.audit import append_audit_event
+        append_audit_event(
+            db,
+            actor_id=user.id,
+            entity_type="WAITLIST_ENTRY",
+            entity_id=str(waitlist_entry.id),
+            action="RECIPIENT_REGISTERED",
+            payload={"ot_id": ot_id, "organ_type": recipient_in.organ_type, "hospital_id": recipient_in.hospital_id, "urgency_score": recipient_in.urgency_score}
+        )
+        
         db.commit()
         db.refresh(waitlist_entry)
         
