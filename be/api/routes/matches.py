@@ -326,3 +326,22 @@ def replay_match(
         "output_hash": match_result["output_hash"],
         "engine_version": match_result["engine_version"]
     }
+
+@router.get("/runs", status_code=status.HTTP_200_OK)
+def get_runs(db: Session = Depends(get_db), user: User = Depends(RoleChecker(READ_ROLES))):
+    runs = db.query(MatchRun).order_by(MatchRun.run_time.desc()).all()
+    result = []
+    for r in runs:
+        offer = db.query(Offer).filter(Offer.id == r.offer_id).first()
+        policy = db.query(PolicyVersion).filter(PolicyVersion.id == r.policy_version_id).first()
+        candidates_count = db.query(Candidate).filter(Candidate.match_run_id == r.id, Candidate.excluded == False).count()
+        result.append({
+            "id": r.id, 
+            "offer_id": r.offer_id, 
+            "run_time": r.run_time.isoformat() + "Z" if r.run_time else None, 
+            "engine_version": r.engine_version,
+            "policy_version": policy.version if policy else "Unknown",
+            "organ": offer.organ_type if offer else "Unknown",
+            "eligible_candidates": candidates_count
+        })
+    return result

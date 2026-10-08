@@ -65,3 +65,9 @@ def get_inclusion_proof(seq: int, db: Session = Depends(get_db)):
     if not proof:
         raise HTTPException(status_code=404, detail="Event not found")
     return proof
+
+from db.models import AuditEvent
+@router.get("/events", status_code=status.HTTP_200_OK)
+def get_audit_events(db: Session = Depends(get_db), user: User = Depends(RoleChecker(["AUDITOR", "ADMIN"]))):
+    events = db.query(AuditEvent).order_by(AuditEvent.sequence.desc()).limit(100).all()
+    return [{"sequence": e.sequence, "timestamp": e.timestamp.isoformat() + "Z" if e.timestamp else None, "actor_id": e.actor_id, "entity_type": e.entity_type, "entity_id": e.entity_id, "action": e.action, "event_hash": e.event_hash} for e in events]

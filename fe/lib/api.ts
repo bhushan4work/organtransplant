@@ -61,6 +61,7 @@ export const api = {
     getByDonor: (id: string) => fetchAPI(`/labs/donor/${id}`, { method: 'GET' }),
   },
   matches: {
+    list: () => fetchAPI('/runs', { method: 'GET' }),
     runMatch: (offerId: string) => fetchAPI(`/offers/${offerId}/match`, { method: 'POST' }),
     getRun: (id: string) => fetchAPI(`/runs/${id}`, { method: 'GET' }),
     recordDecision: (runId: string, data: any) => fetchAPI(`/runs/${runId}/decisions`, { method: 'POST', body: JSON.stringify(data) }),
@@ -68,7 +69,14 @@ export const api = {
   sim: {
     runMatch: (data: any) => fetchAPI('/sim/match', { method: 'POST', body: JSON.stringify(data) }),
   },
+  overview: {
+    get: () => fetchAPI('/overview', { method: 'GET' }),
+  },
+  policies: {
+    list: () => fetchAPI('/policies', { method: 'GET' }),
+  },
   audit: {
+    events: () => fetchAPI('/audit/events', { method: 'GET' }),
     verify: () => fetchAPI('/audit/verify', { method: 'GET' }),
     proof: (seq: number) => fetchAPI(`/audit/proof/${seq}`, { method: 'GET' }),
     replay: (runId: string) => fetchAPI(`/runs/${runId}/replay`, { method: 'POST' }),

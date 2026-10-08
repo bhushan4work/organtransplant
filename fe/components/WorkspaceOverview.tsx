@@ -1,15 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
 export function WorkspaceOverview() {
-  const candidates = [
-    { code: 'C-2048', organ: 'Kidney', blood: 'O+', hla: 'Passed', urgency: 'High', score: 96, status: 'Eligible', urgencyClass: 'bg-[#fff5e4] text-[#94620d]' },
-    { code: 'C-1932', organ: 'Liver', blood: 'A+', hla: 'Passed', urgency: 'Critical', score: 92, status: 'Review required', urgencyClass: 'bg-[#fff0f0] text-[#aa4848]' },
-    { code: 'C-2187', organ: 'Kidney', blood: 'B+', hla: 'Passed', urgency: 'Moderate', score: 88, status: 'Eligible', urgencyClass: 'bg-[#eef4ff] text-[#356eaa]' },
-    { code: 'C-1881', organ: 'Heart', blood: 'O−', hla: 'Pending', urgency: 'High', score: 84, status: 'Pending verification', urgencyClass: 'bg-[#fff5e4] text-[#94620d]' }
-  ];
+  const [data, setData] = useState<any>(null);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [activity, setActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getStatusClass = (s: string) => {
     if (s === 'Eligible' || s === 'Passed') return 'bg-[#e9f7f2] text-[#287d6e]';
@@ -18,11 +17,66 @@ export function WorkspaceOverview() {
     return '';
   };
 
-  const activity = [
-    { type: 'Verification', title: 'Audit chain integrity verified', desc: 'All linked demo hashes validated successfully.', hash: 'sha256:4a91…88c2', time: '11:18 AM', iconClass: 'text-[#287f7b] bg-[#eaf7f5]' },
-    { type: 'Matching run', title: 'Matching run completed', desc: 'RUN-2026-104 · Kidney · 8 eligible candidates.', hash: 'sha256:8cf2…1d90', time: '11:06 AM', iconClass: 'text-[#596b7e] bg-[#f0f4f8]' },
-    { type: 'Review', title: 'Human review checkpoint recorded', desc: 'Review status updated for a synthetic candidate set.', hash: 'sha256:b615…c411', time: '10:58 AM', iconClass: 'text-[#94620d] bg-[#fff5e4]' }
-  ];
+  useEffect(() => {
+    async function load() {
+      try {
+        const [overviewRes, recRes, auditRes] = await Promise.all([
+          api.overview.get(),
+          api.recipients.list(),
+          api.audit.events()
+        ]);
+        setData(overviewRes);
+        
+        const mappedCandidates = recRes.slice(0, 4).map((r: any) => ({
+          code: `C-${r.id}`,
+          organ: r.organ_type,
+          blood: r.blood_type || 'Unknown',
+          hla: r.blood_type !== 'Unknown' ? 'Passed' : 'Pending',
+          urgency: r.urgency_score > 80 ? 'High' : r.urgency_score > 50 ? 'Moderate' : 'Low',
+          score: r.urgency_score,
+          status: r.status === 'WAITING' ? 'Eligible' : r.status,
+          urgencyClass: r.urgency_score > 80 ? 'bg-[#fff5e4] text-[#94620d]' : 'bg-[#eef4ff] text-[#356eaa]'
+        }));
+        setCandidates(mappedCandidates);
+
+        const mappedActivity = auditRes.slice(0, 3).map((a: any) => ({
+          type: a.entity_type,
+          title: a.action.replace(/_/g, ' '),
+          desc: a.payload ? JSON.stringify(a.payload).slice(0, 50) + '...' : 'System event',
+          hash: a.event_hash ? `sha256:${a.event_hash.slice(0, 8)}...` : 'N/A',
+          time: new Date(a.timestamp).toLocaleTimeString(),
+          iconClass: a.action.includes('MATCH') ? 'text-[#596b7e] bg-[#f0f4f8]' : 'text-[#287f7b] bg-[#eaf7f5]'
+        }));
+        setActivity(mappedActivity);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        Error loading overview: {error}
+      </div>
+    );
+  }
+
+  const counts = data?.counts || { offers: 0, recipients: 0, runs: 0, audit: 0 };
+
+
+
 
   return (
     <section className="animate-[fadeIn_0.22s_ease]">
@@ -92,7 +146,7 @@ export function WorkspaceOverview() {
             </div>
           </div>
           <div className="flex items-baseline gap-[8px] mt-[12px]">
-            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">128</span>
+            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">{counts.recipients}</span>
             <span className="text-[11px] text-[#62728a]">cases in queue</span>
           </div>
           <div className="flex flex-wrap items-center gap-[5px] mt-[11px] text-[#62728a] text-[9px] md:text-[10px]">
@@ -111,7 +165,7 @@ export function WorkspaceOverview() {
             </div>
           </div>
           <div className="flex items-baseline gap-[8px] mt-[12px]">
-            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">24</span>
+            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">{counts.offers}</span>
             <span className="text-[11px] text-[#62728a]">currently eligible</span>
           </div>
           <div className="flex flex-wrap items-center gap-[5px] mt-[11px] text-[#62728a] text-[9px] md:text-[10px]">
@@ -130,7 +184,7 @@ export function WorkspaceOverview() {
             </div>
           </div>
           <div className="flex items-baseline gap-[8px] mt-[12px]">
-            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">7</span>
+            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">{counts.runs}</span>
             <span className="text-[11px] text-[#62728a]">need a review</span>
           </div>
           <div className="flex flex-wrap items-center gap-[5px] mt-[11px] text-[#62728a] text-[9px] md:text-[10px]">
@@ -149,7 +203,7 @@ export function WorkspaceOverview() {
             </div>
           </div>
           <div className="flex items-baseline gap-[8px] mt-[12px]">
-            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">100%</span>
+            <span className="text-[#172236] text-[25px] md:text-[29px] font-[800] tracking-[-1.2px] leading-none">{counts.audit > 0 ? '100%' : '0%'}</span>
             <span className="text-[11px] text-[#62728a]">verified records</span>
           </div>
           <div className="flex flex-wrap items-center gap-[5px] mt-[11px] text-[#62728a] text-[9px] md:text-[10px]">
@@ -282,7 +336,7 @@ export function WorkspaceOverview() {
                 <circle className="fill-none stroke-[#299287] stroke-[8] stroke-linecap-round stroke-dasharray-[276.5] stroke-dashoffset-[2.8]" cx="50" cy="50" r="44"/>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-[21px] md:text-[24px] leading-none font-[850] tracking-[-1px]">100%</div>
+                <div className="text-[21px] md:text-[24px] leading-none font-[850] tracking-[-1px]">{counts.audit > 0 ? '100%' : '0%'}</div>
                 <div className="mt-[5px] text-[#62728a] text-[9px] font-[750] tracking-[.4px] uppercase">Integrity</div>
               </div>
             </div>

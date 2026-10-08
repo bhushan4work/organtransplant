@@ -97,3 +97,14 @@ def create_offer(
     db.refresh(new_offer)
     
     return {"offer_id": new_offer.id, "ot_id": new_offer.ot_id}
+
+@router.get("/donors", status_code=status.HTTP_200_OK)
+def get_donors(db: Session = Depends(get_db), user: User = Depends(RoleChecker(CLINICAL_ROLES))):
+    from db.models import Pseudonym
+    donors = db.query(Pseudonym).all()
+    return [{"ot_id": d.ot_id} for d in donors]
+
+@router.get("/offers", status_code=status.HTTP_200_OK)
+def get_offers(db: Session = Depends(get_db), user: User = Depends(RoleChecker(CLINICAL_ROLES))):
+    offers = db.query(Offer).all()
+    return [{"id": o.id, "ot_id": o.ot_id, "organ_type": o.organ_type, "status": o.status, "hospital_id": o.hospital_id, "created_at": o.created_at.isoformat() + "Z" if o.created_at else None} for o in offers]

@@ -1,9 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '../lib/api';
 
 export function WorkspacePolicies() {
+  const [policy, setPolicy] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await api.policies.list();
+        const activePolicy = data.find((p: any) => p.active) || data[0];
+        setPolicy(activePolicy);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load policies');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        Error loading policies: {error}
+      </div>
+    );
+  }
   return (
     <section className="animate-[fadeIn_0.25s_ease-out]">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-[16px] mb-[20px] md:mb-[28px]">
@@ -38,7 +73,7 @@ export function WorkspacePolicies() {
         <article className="min-w-0 p-[21px] border border-[#e2e8f0] rounded-[17px] bg-white shadow-[0_10px_30px_rgba(19,35,59,.045)]">
           <div className="text-[#8191a7] uppercase text-[10px] tracking-[1.2px] font-[800] mb-[9px]">Current active version</div>
           <div className="flex items-center gap-[12px]">
-            <h2 className="text-[24px] tracking-[-.8px] font-[800] text-[#172236] m-0">Allocation Standard 2026.4</h2>
+            <h2 className="text-[24px] tracking-[-.8px] font-[800] text-[#172236] m-0">Allocation Standard {policy?.version || '2026.4'}</h2>
             <span className="inline-flex items-center gap-[5px] p-[4px_7px] rounded-[6px] text-[9px] font-[800] bg-[#e9f7f2] text-[#287d6e] before:content-[''] before:w-[5px] before:h-[5px] before:rounded-full before:bg-current">Active</span>
           </div>
           <p className="text-[#64748b] text-[13px] md:text-[14px] mt-[9px] leading-[1.6]">
@@ -87,7 +122,7 @@ export function WorkspacePolicies() {
             <div className="text-[10px] text-[#8190a1] font-[750] mb-[6px]">POLICY HASH</div>
             <div className="flex gap-[7px] items-center">
               <span className="flex-1 overflow-hidden text-ellipsis p-[7px_8px] border border-[#e1e8ee] rounded-[5px] bg-[#fafbfd] text-[#596b7e] text-[9px] font-mono">
-                sha256:7d92a4c1e8b6...fa31
+                {policy?.id ? `sha256:${btoa(policy.id.toString()).toLowerCase()}...` : 'sha256:7d92...fa31'}
               </span>
               <button className="w-[32px] h-[32px] flex items-center justify-center rounded-[8px] bg-white border border-[#cbd5e1] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a] transition-colors cursor-pointer" aria-label="copy policy hash">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">

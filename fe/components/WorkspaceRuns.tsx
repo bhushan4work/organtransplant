@@ -1,22 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
-const runsData = [
-  {id:'RUN-2026-104',organ:'Kidney',eligible:8,policy:'2026.4',reviewer:'Dr. Sarah Chen',time:'Today, 11:06 AM',status:'Verified'},
-  {id:'RUN-2026-103',organ:'Liver',eligible:6,policy:'2026.4',reviewer:'Alex Morgan',time:'Today, 10:42 AM',status:'Verified'},
-  {id:'RUN-2026-102',organ:'Heart',eligible:3,policy:'2026.4',reviewer:'Dr. Sarah Chen',time:'Today, 9:58 AM',status:'Review required'},
-  {id:'RUN-2026-101',organ:'Kidney',eligible:9,policy:'2026.3',reviewer:'Demo service account',time:'Yesterday, 4:31 PM',status:'Verified'},
-  {id:'RUN-2026-100',organ:'Liver',eligible:5,policy:'2026.3',reviewer:'Alex Morgan',time:'Yesterday, 2:14 PM',status:'Verified'},
-  {id:'RUN-2026-099',organ:'Kidney',eligible:7,policy:'2026.3',reviewer:'Dr. Sarah Chen',time:'Oct 04, 3:40 PM',status:'Verified'},
-  {id:'RUN-2026-098',organ:'Heart',eligible:4,policy:'2026.3',reviewer:'Alex Morgan',time:'Oct 04, 1:26 PM',status:'Verified'},
-  {id:'RUN-2026-097',organ:'Kidney',eligible:8,policy:'2026.3',reviewer:'Dr. Sarah Chen',time:'Oct 03, 5:08 PM',status:'Verified'},
-  {id:'RUN-2026-096',organ:'Liver',eligible:6,policy:'2026.2',reviewer:'Demo service account',time:'Oct 03, 1:15 PM',status:'Verified'},
-  {id:'RUN-2026-095',organ:'Kidney',eligible:10,policy:'2026.2',reviewer:'Alex Morgan',time:'Oct 02, 4:47 PM',status:'Verified'},
-  {id:'RUN-2026-094',organ:'Heart',eligible:2,policy:'2026.2',reviewer:'Dr. Sarah Chen',time:'Oct 02, 10:21 AM',status:'Verified'},
-  {id:'RUN-2026-093',organ:'Kidney',eligible:7,policy:'2026.2',reviewer:'Alex Morgan',time:'Oct 01, 9:52 AM',status:'Verified'}
-];
 
 const getStatusClass = (status: string) => {
   if (status.includes('Verified')) return 'bg-[#e9f7f2] text-[#287d6e]';
@@ -28,6 +14,48 @@ const getStatusClass = (status: string) => {
 export function WorkspaceRuns() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [runsData, setRunsData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await api.matches.list();
+        const mapped = data.map((r: any) => ({
+          id: `RUN-${new Date(r.run_time).getFullYear()}-${r.id}`,
+          organ: r.organ,
+          eligible: r.eligible_candidates,
+          policy: r.policy_version,
+          reviewer: 'System',
+          time: new Date(r.run_time).toLocaleString(),
+          status: 'Verified'
+        }));
+        setRunsData(mapped);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load runs');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        Error loading runs: {error}
+      </div>
+    );
+  }
 
   const filteredRuns = runsData.filter(r => {
     const matchesSearch = `${r.id} ${r.organ} ${r.policy} ${r.reviewer} ${r.status}`.toLowerCase().includes(search.toLowerCase());

@@ -1,16 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
-const auditRecordsData = [
-  {type:'Verification',title:'Audit chain integrity verified',desc:'All linked demo hashes validated successfully.',hash:'sha256:4a91…88c2',time:'11:18 AM',run:'SYS-VERIFY-346'},
-  {type:'Matching run',title:'Matching run completed',desc:'RUN-2026-104 · Kidney · 8 eligible candidates.',hash:'sha256:8cf2…1d90',time:'11:06 AM',run:'RUN-2026-104'},
-  {type:'Review',title:'Human review checkpoint recorded',desc:'Review status updated for a synthetic candidate set.',hash:'sha256:b615…c411',time:'10:58 AM',run:'REV-DEMO-021'},
-  {type:'Policy',title:'Active policy version confirmed',desc:'Allocation Standard 2026.4 hash pinned to run metadata.',hash:'sha256:7d92…fa31',time:'10:44 AM',run:'POL-2026-4'},
-  {type:'Matching run',title:'Matching run completed',desc:'RUN-2026-103 · Liver · 6 eligible candidates.',hash:'sha256:da10…ee72',time:'10:42 AM',run:'RUN-2026-103'},
-  {type:'Verification',title:'Pseudonymization checks passed',desc:'Direct identifiers excluded from the demo result view.',hash:'sha256:920a…b314',time:'10:40 AM',run:'PRIV-CHECK-019'}
-];
 
 const getIcon = (type: string) => {
   if (type === 'Matching run') {
@@ -38,6 +30,54 @@ const getIcon = (type: string) => {
 export function WorkspaceAudit() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [auditRecordsData, setAuditRecordsData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await api.audit.events();
+        const mapped = data.map((a: any) => {
+          let tType = 'Verification';
+          if (a.action.includes('MATCH')) tType = 'Matching run';
+          if (a.action.includes('DECISION') || a.action.includes('REVIEW')) tType = 'Review';
+          if (a.action.includes('POLICY')) tType = 'Policy';
+
+          return {
+            type: tType,
+            title: a.action.replace(/_/g, ' '),
+            desc: a.payload ? JSON.stringify(a.payload).slice(0, 50) + '...' : 'System event',
+            hash: a.event_hash ? `sha256:${a.event_hash.slice(0,10)}...` : 'N/A',
+            time: new Date(a.timestamp).toLocaleString(),
+            run: a.entity_id ? `${a.entity_type.slice(0,3)}-${a.entity_id}` : 'SYS-EVT'
+          };
+        });
+        setAuditRecordsData(mapped);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load audit events');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        Error loading audit records: {error}
+      </div>
+    );
+  }
 
   const filteredAudit = auditRecordsData.filter(a => {
     const matchesSearch = `${a.type} ${a.title} ${a.desc} ${a.hash} ${a.run}`.toLowerCase().includes(search.toLowerCase());
@@ -81,7 +121,7 @@ export function WorkspaceAudit() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px] mb-[18px]">
         <div className="p-[16px_18px] border border-[#e2e8f0] rounded-[14px] bg-white">
           <div className="text-[#8190a1] text-[10px] font-[650]">Events recorded</div>
-          <div className="text-[#172236] text-[22px] tracking-[-.7px] font-[850] mt-[5px]">346</div>
+          <div className="text-[#172236] text-[22px] tracking-[-.7px] font-[850] mt-[5px]">{auditRecordsData.length}</div>
           <div className="text-[#318274] text-[10px] mt-[4px]">Demo activity total</div>
         </div>
         <div className="p-[16px_18px] border border-[#e2e8f0] rounded-[14px] bg-white">

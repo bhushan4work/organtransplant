@@ -1,17 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../lib/api';
 
-const candidates = [
-  { id: 'PT-2048', code: 'C-2048', organ: 'Kidney', blood: 'O+', hla: 'Passed', urgency: 'High', score: 96, status: 'Eligible', urgencyClass: 'text-[#94620d] bg-[#fff5e4]' },
-  { id: 'PT-1932', code: 'C-1932', organ: 'Liver', blood: 'A+', hla: 'Passed', urgency: 'Critical', score: 92, status: 'Review required', urgencyClass: 'text-[#aa4848] bg-[#fff0f0]' },
-  { id: 'PT-2187', code: 'C-2187', organ: 'Kidney', blood: 'B+', hla: 'Passed', urgency: 'Moderate', score: 88, status: 'Eligible', urgencyClass: 'text-[#356eaa] bg-[#eef4ff]' },
-  { id: 'PT-1881', code: 'C-1881', organ: 'Heart', blood: 'O−', hla: 'Pending', urgency: 'High', score: 84, status: 'Pending verification', urgencyClass: 'text-[#94620d] bg-[#fff5e4]' },
-  { id: 'PT-2093', code: 'C-2093', organ: 'Liver', blood: 'AB+', hla: 'Passed', urgency: 'High', score: 81, status: 'Eligible', urgencyClass: 'text-[#94620d] bg-[#fff5e4]' },
-  { id: 'PT-2210', code: 'C-2210', organ: 'Kidney', blood: 'A−', hla: 'Review', urgency: 'Moderate', score: 77, status: 'Review required', urgencyClass: 'text-[#356eaa] bg-[#eef4ff]' },
-  { id: 'PT-1774', code: 'C-1774', organ: 'Heart', blood: 'B−', hla: 'Passed', urgency: 'High', score: 73, status: 'Eligible', urgencyClass: 'text-[#94620d] bg-[#fff5e4]' },
-  { id: 'PT-2256', code: 'C-2256', organ: 'Kidney', blood: 'O+', hla: 'Pending', urgency: 'Low', score: 69, status: 'Pending verification', urgencyClass: 'text-[#356eaa] bg-[#eef4ff]' }
-];
 
 const getStatusClass = (status: string) => {
   if (status.includes('Eligible') || status.includes('Passed')) return 'bg-[#e9f7f2] text-[#287d6e]';
@@ -24,6 +15,50 @@ export function WorkspaceRecipients() {
   const [search, setSearch] = useState('');
   const [organFilter, setOrganFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await api.recipients.list();
+        const mapped = data.map((r: any) => ({
+          id: `PT-${r.id}`,
+          code: `C-${r.id}`,
+          organ: r.organ_type,
+          blood: r.blood_type || 'Unknown',
+          hla: r.blood_type !== 'Unknown' ? 'Passed' : 'Pending',
+          urgency: r.urgency_score > 80 ? 'High' : r.urgency_score > 50 ? 'Moderate' : 'Low',
+          score: r.urgency_score,
+          status: r.status === 'WAITING' ? 'Eligible' : r.status,
+          urgencyClass: r.urgency_score > 80 ? 'text-[#94620d] bg-[#fff5e4]' : 'text-[#356eaa] bg-[#eef4ff]'
+        }));
+        setCandidates(mapped);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load recipients');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#97002f] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        Error loading recipients: {error}
+      </div>
+    );
+  }
 
   const filteredCandidates = candidates.filter(c => {
     const matchesSearch = `${c.code} ${c.organ} ${c.blood} ${c.urgency}`.toLowerCase().includes(search.toLowerCase());

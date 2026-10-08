@@ -68,3 +68,24 @@ def register_recipient(
         raise HTTPException(status_code=500, detail="Failed to register recipient")
         
     return {"ot_id": ot_id, "waitlist_entry_id": waitlist_entry.id}
+
+@router.get("/recipients", status_code=status.HTTP_200_OK)
+def get_recipients(db: Session = Depends(get_db), user: User = Depends(RoleChecker(CLINICAL_ROLES))):
+    entries = db.query(WaitlistEntry).all()
+    from db.models import CompatibilityProfile
+    result = []
+    for e in entries:
+        profile = db.query(CompatibilityProfile).filter(CompatibilityProfile.ot_id == e.ot_id).first()
+        blood = profile.blood_type if profile else "Unknown"
+        result.append({
+            "id": e.id, 
+            "ot_id": e.ot_id, 
+            "organ_type": e.organ_type, 
+            "urgency_score": e.urgency_score, 
+            "status": e.status, 
+            "hospital_id": e.hospital_id, 
+            "blood_type": blood,
+            "created_at": e.created_at.isoformat() + "Z" if e.created_at else None
+        })
+    return result
+
