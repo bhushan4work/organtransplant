@@ -2,9 +2,24 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { api } from '../lib/api';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSignIn = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await api.auth.login({ email: "coord@golden.edu", password: "coord123" });
+      router.push('/workspace');
+    } catch (err) {
+      console.error('Login failed:', err);
+      // For demo purposes, we can still redirect
+      router.push('/workspace');
+    }
+  };
 
   return (
     <header className="h-[78px] md:h-[94px] flex items-center bg-white/97 border-b border-[#f0f2f5] z-50 sticky top-0">
@@ -31,12 +46,12 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-3.5 md:gap-[35px] whitespace-nowrap ml-auto lg:ml-0">
-          <Link href="#sign-in" className="hidden md:block text-[16px] font-[620] text-[#34445e] hover:text-[#8b0028]">
+          <a href="#" onClick={handleSignIn} className="hidden md:block text-[16px] font-[620] text-[#34445e] hover:text-[#8b0028]">
             Sign in
-          </Link>
-          <Link href="#get-started" className="min-h-[43px] md:min-h-[50px] min-w-[99px] sm:min-w-[114px] md:min-w-[152px] inline-flex items-center justify-center rounded-full bg-[#8b0028] text-white font-[690] px-[12px] sm:px-[17px] md:px-[29px] text-[13px] sm:text-[14px] md:text-[16px] shadow-[0_8px_17px_rgba(72,0,24,0.12)] hover:-translate-y-[2px] hover:bg-[#760020] hover:shadow-[0_11px_22px_rgba(72,0,24,0.19)] transition-all duration-200">
+          </a>
+          <a href="#" onClick={handleSignIn} className="min-h-[43px] md:min-h-[50px] min-w-[99px] sm:min-w-[114px] md:min-w-[152px] inline-flex items-center justify-center rounded-full bg-[#8b0028] text-white font-[690] px-[12px] sm:px-[17px] md:px-[29px] text-[13px] sm:text-[14px] md:text-[16px] shadow-[0_8px_17px_rgba(72,0,24,0.12)] hover:-translate-y-[2px] hover:bg-[#760020] hover:shadow-[0_11px_22px_rgba(72,0,24,0.19)] transition-all duration-200">
             Get started
-          </Link>
+          </a>
           
           {/* Mobile Menu Button */}
           <button 
@@ -62,7 +77,7 @@ export function Navbar() {
           <Link href="#features" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Features</Link>
           <Link href="#security" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Security</Link>
           <Link href="#documentation" className="text-[#4e5d74] text-[16px] font-[560]" onClick={() => setIsMobileMenuOpen(false)}>Documentation</Link>
-          <Link href="#sign-in" className="text-[#34445e] text-[16px] font-[620] md:hidden" onClick={() => setIsMobileMenuOpen(false)}>Sign in</Link>
+          <a href="#" onClick={handleSignIn} className="text-[#34445e] text-[16px] font-[620] md:hidden">Sign in</a>
         </div>
       )}
     </header>

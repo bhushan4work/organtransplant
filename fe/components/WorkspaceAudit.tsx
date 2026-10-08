@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { api } from '../lib/api';
 
 const auditRecordsData = [
   {type:'Verification',title:'Audit chain integrity verified',desc:'All linked demo hashes validated successfully.',hash:'sha256:4a91…88c2',time:'11:18 AM',run:'SYS-VERIFY-346'},
@@ -116,7 +117,14 @@ export function WorkspaceAudit() {
           <option value="Review">Human reviews</option>
         </select>
         <div className="flex-1 hidden sm:block"></div>
-        <button className="h-[38px] px-[16px] border border-[#cbd5e1] rounded-[9px] bg-white text-[#475569] font-[700] text-[11px] hover:bg-[#f8fafc] cursor-pointer inline-flex items-center justify-center gap-[7px] transition-colors">
+        <button onClick={async () => {
+          try {
+            const res = await api.audit.verify();
+            alert(res.valid ? "Audit chain verified successfully!" : "Verification failed!");
+          } catch (e: any) {
+            alert("Verification error: " + e.message);
+          }
+        }} className="h-[38px] px-[16px] border border-[#cbd5e1] rounded-[9px] bg-white text-[#475569] font-[700] text-[11px] hover:bg-[#f8fafc] cursor-pointer inline-flex items-center justify-center gap-[7px] transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M20 12a8 8 0 1 1-2.3-5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>

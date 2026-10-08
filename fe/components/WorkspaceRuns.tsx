@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { api } from '../lib/api';
 
 const runsData = [
   {id:'RUN-2026-104',organ:'Kidney',eligible:8,policy:'2026.4',reviewer:'Dr. Sarah Chen',time:'Today, 11:06 AM',status:'Verified'},
@@ -108,11 +109,19 @@ export function WorkspaceRuns() {
           <option value="Review required">Review required</option>
         </select>
         <div className="flex-1 hidden sm:block"></div>
-        <button className="h-[38px] px-[16px] border border-[#cbd5e1] rounded-[9px] bg-white text-[#475569] font-[700] text-[11px] hover:bg-[#f8fafc] cursor-pointer inline-flex items-center justify-center gap-[7px] transition-colors">
+        <button onClick={async () => {
+          try {
+            // Assuming 1 as demo run_id
+            const res = await api.fhir.getBundle("1");
+            alert(`FHIR Bundle Exported:\n${JSON.stringify(res).slice(0, 150)}...`);
+          } catch (e: any) {
+            alert("FHIR Export failed: " + e.message);
+          }
+        }} className="h-[38px] px-[16px] border border-[#cbd5e1] rounded-[9px] bg-white text-[#475569] font-[700] text-[11px] hover:bg-[#f8fafc] cursor-pointer inline-flex items-center justify-center gap-[7px] transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
           </svg> 
-          Export CSV
+          Export FHIR
         </button>
       </div>
 

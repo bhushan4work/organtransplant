@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "fe/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "be/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "be/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "fe/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://your-project.vercel.app"
+  }
+}

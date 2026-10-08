@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { api } from '../lib/api';
 
 export function WorkspaceOverview() {
   const candidates = [
@@ -48,7 +51,14 @@ export function WorkspaceOverview() {
               <path d="m7 10 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <button className="inline-flex items-center justify-center gap-[8px] min-h-[39px] px-[14px] rounded-[10px] border border-transparent font-[750] text-[12px] transition-all whitespace-nowrap text-white bg-[#97002f] shadow-[0_5px_13px_rgba(151,0,47,.12)] hover:-translate-y-[1px] hover:bg-[#760025] cursor-pointer">
+          <button onClick={async () => {
+            try {
+              const res = await api.sim.runMatch({ offer_id: 1 });
+              alert(`Match successful! Output hash: ${res.output_hash}\nMatches: ${res.total_candidates}`);
+            } catch (err: any) {
+              alert(`Match failed: ${err.message}`);
+            }
+          }} className="inline-flex items-center justify-center gap-[8px] min-h-[39px] px-[14px] rounded-[10px] border border-transparent font-[750] text-[12px] transition-all whitespace-nowrap text-white bg-[#97002f] shadow-[0_5px_13px_rgba(151,0,47,.12)] hover:-translate-y-[1px] hover:bg-[#760025] cursor-pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg> 
