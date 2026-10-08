@@ -113,7 +113,17 @@ class MatchRun(Base):
     id = Column(Integer, primary_key=True, index=True)
     offer_id = Column(Integer, ForeignKey("clinical.offers.id"), nullable=False)
     policy_version_id = Column(Integer, ForeignKey("matching.policy_versions.id"), nullable=False)
+    
+    engine_version = Column(String, nullable=False)
+    policy_hash = Column(String, nullable=False)
+    offer_hash = Column(String, nullable=False)
+    waitlist_hash = Column(String, nullable=False)
+    output_hash = Column(String, nullable=False)
+    
+    input_snapshot = Column(JSON, nullable=False)
     run_time = Column(DateTime, default=datetime.utcnow)
+    
+    candidates = relationship("Candidate", back_populates="match_run")
 
 class Candidate(Base):
     __tablename__ = "candidates"
@@ -122,8 +132,14 @@ class Candidate(Base):
     id = Column(Integer, primary_key=True, index=True)
     match_run_id = Column(Integer, ForeignKey("matching.match_runs.id"), nullable=False)
     waitlist_entry_id = Column(Integer, ForeignKey("clinical.waitlist_entries.id"), nullable=False)
+    
+    excluded = Column(Boolean, default=False)
+    exclusion_reason = Column(String, nullable=True)
     score = Column(Float, nullable=False)
-    rank = Column(Integer, nullable=False)
+    rank = Column(Integer, nullable=True)
+    trace_log = Column(JSON, nullable=False)
+    
+    match_run = relationship("MatchRun", back_populates="candidates")
 
 class Decision(Base):
     __tablename__ = "decisions"

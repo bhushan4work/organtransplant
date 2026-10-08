@@ -1,0 +1,198 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from datetime import datetime
+import yaml
+
+from db.database import get_db
+from db.models import User, Offer, WaitlistEntry, CompatibilityProfile, PolicyVersion, MatchRun, Candidate, AuditEvent
+from api.dependencies import RoleChecker, get_current_user
+from matching_engine.engine import run_match
+
+router = APIRouter()
+
+MATCH_ROLES = ["COORDINATOR", "CLINICIAN", "ADMIN"]
+READ_ROLES = ["COORDINATOR", "CLINICIAN", "ADMIN", "AUDITOR"]
+
+@router.post("/offers/{offer_id}/match", status_code=status.HTTP_201_CREATED)
+def trigger_match(
+    offer_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(RoleChecker(MATCH_ROLES))
+):
+    now = datetime.utcnow()
+    
+    # 1. Load Offer
+    offer = db.query(Offer).filter(Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+        
+    # Scoping
+    if user.role.value != "ADMIN" and user.hospital_id != offer.hospital_id:
+        raise HTTPException(status_code=403, detail="Not authorized to run match for this offer")
+
+    # 2. Load Donor Compatibility Profile
+    donor_profile = db.query(CompatibilityProfile).filter(CompatibilityProfile.ot_id == offer.ot_id).first()
+    if not donor_profile:
+        raise HTTPException(status_code=400, detail="Donor lab data missing")
+        
+    offer_dict = {
+        "ot_id": offer.ot_id,
+        "organ_type": offer.organ_type,
+        "hospital_id": offer.hospital_id,
+        "blood_type": donor_profile.blood_type,
+        "hla_data": donor_profile.hla_typing
+    }
+    
+    # 3. Load Active Policy
+    policy = db.query(PolicyVersion).filter(PolicyVersion.active == True).order_by(PolicyVersion.created_at.desc()).first()
+    if not policy:
+        raise HTTPException(status_code=400, detail="No active policy found")
+    
+    # The engine expects YAML string, so we dump the DB JSON to YAML
+    policy_yaml = yaml.dump(policy.rules)
+    
+    # 4. Load Waitlist
+    waitlist_entries = db.query(WaitlistEntry).filter(
+        WaitlistEntry.organ_type == offer.organ_type,
+        WaitlistEntry.status == "WAITING"
+    ).all()
+    
+    waitlist_dicts = []
+    # Map waitlist entry ID to OT ID for creating candidate records later
+    ot_id_to_entry_id = {}
+    
+    for entry in waitlist_entries:
+        profile = db.query(CompatibilityProfile).filter(CompatibilityProfile.ot_id == entry.ot_id).first()
+        if not profile:
+            continue # Skip candidates without lab data
+            
+        waitlist_dicts.append({
+            "ot_id": entry.ot_id,
+            "hospital_id": entry.hospital_id,
+            "blood_type": profile.blood_type,
+            "urgency_score": entry.urgency_score,
+            "listed_at": entry.created_at.isoformat(),
+            "hla_data": profile.hla_typing,
+            "unacceptable_antigens": profile.hla_typing.get("unacceptable_antigens", [])
+        })
+        ot_id_to_entry_id[entry.ot_id] = entry.id
+        
+    # 5. Run Pure Python Matching Engine
+    try:
+        match_result = run_match(offer_dict, policy_yaml, waitlist_dicts, now)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Matching engine failed: {str(e)}")
+
+    # 6. Persist Full Run Transactionally
+    try:
+        snapshot = {
+            "offer": offer_dict,
+            "waitlist": waitlist_dicts
+        }
+        
+        db_run = MatchRun(
+            offer_id=offer.id,
+            policy_version_id=policy.id,
+            engine_version=match_result["engine_version"],
+            policy_hash=match_result["input_hashes"]["policy"],
+            offer_hash=match_result["input_hashes"]["offer"],
+            waitlist_hash=match_result["input_hashes"]["waitlist"],
+            output_hash=match_result["output_hash"],
+            input_snapshot=snapshot,
+            run_time=now
+        )
+        db.add(db_run)
+        db.flush() # Get ID
+        
+        # Save valid matches
+        for match in match_result["matches"]:
+            db.add(Candidate(
+                match_run_id=db_run.id,
+                waitlist_entry_id=ot_id_to_entry_id[match["ot_id"]],
+                excluded=False,
+                score=match["score"],
+                rank=match["rank"],
+                trace_log=match["trace"]
+            ))
+            
+        # Save excluded matches
+        for excl in match_result["excluded"]:
+            db.add(Candidate(
+                match_run_id=db_run.id,
+                waitlist_entry_id=ot_id_to_entry_id[excl["ot_id"]],
+                excluded=True,
+                exclusion_reason=excl["exclusion_reason"],
+                score=excl["score"],
+                rank=None,
+                trace_log=excl["trace"]
+            ))
+            
+        # Append to Audit Ledger
+        audit = AuditEvent(
+            entity_type="MATCH_RUN",
+            entity_id=str(db_run.id),
+            action="MATCH_RUN_COMPLETED",
+            actor_id=user.id,
+            timestamp=now,
+            payload_hash=match_result["output_hash"]
+        )
+        db.add(audit)
+        
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error during match persistence")
+        
+    return {
+        "match_run_id": db_run.id,
+        "engine_version": match_result["engine_version"],
+        "output_hash": match_result["output_hash"],
+        "total_candidates": len(match_result["matches"]),
+        "total_excluded": len(match_result["excluded"])
+    }
+
+@router.get("/runs/{run_id}", status_code=status.HTTP_200_OK)
+def get_match_run(
+    run_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(RoleChecker(READ_ROLES))
+):
+    run = db.query(MatchRun).filter(MatchRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Match run not found")
+        
+    offer = db.query(Offer).filter(Offer.id == run.offer_id).first()
+    if user.role.value not in ["ADMIN", "AUDITOR"] and offer.hospital_id != user.hospital_id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this match run")
+        
+    candidates = db.query(Candidate).filter(Candidate.match_run_id == run.id).all()
+    
+    return {
+        "id": run.id,
+        "offer_id": run.offer_id,
+        "run_time": run.run_time,
+        "engine_version": run.engine_version,
+        "hashes": {
+            "policy": run.policy_hash,
+            "offer": run.offer_hash,
+            "waitlist": run.waitlist_hash,
+            "output": run.output_hash
+        },
+        "matches": [
+            {
+                "candidate_id": c.id,
+                "waitlist_entry_id": c.waitlist_entry_id,
+                "rank": c.rank,
+                "score": c.score,
+                "trace": c.trace_log
+            } for c in candidates if not c.excluded
+        ],
+        "excluded": [
+            {
+                "candidate_id": c.id,
+                "waitlist_entry_id": c.waitlist_entry_id,
+                "reason": c.exclusion_reason,
+                "trace": c.trace_log
+            } for c in candidates if c.excluded
+        ]
+    }

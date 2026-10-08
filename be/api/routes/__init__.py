@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from . import health, auth, donors, recipients, labs
+from . import health, auth, donors, recipients, labs, matches
 
 router = APIRouter()
 
@@ -8,3 +8,4 @@ router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(donors.router, tags=["clinical", "donors"])
 router.include_router(recipients.router, tags=["clinical", "recipients"])
 router.include_router(labs.router, tags=["clinical", "labs"])
+router.include_router(matches.router, tags=["matching"])
