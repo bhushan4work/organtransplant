@@ -26,7 +26,7 @@ export function WorkspaceOverview() {
         const [overviewRes, recRes, auditRes] = await Promise.all([
           api.overview.get(),
           api.recipients.list(),
-          api.audit.events()
+          api.audit.events().catch(() => null),
         ]);
         setData(overviewRes);
         
@@ -42,7 +42,9 @@ export function WorkspaceOverview() {
         }));
         setCandidates(mappedCandidates);
 
-        const mappedActivity = auditRes.slice(0, 3).map((a: any) => ({
+        // Fall back to overview's recent_activity if audit/events is not permitted
+        const rawActivity = auditRes ?? overviewRes?.recent_activity ?? [];
+        const mappedActivity = rawActivity.slice(0, 3).map((a: any) => ({
           type: a.entity_type,
           title: a.action.replace(/_/g, ' '),
           desc: a.payload ? JSON.stringify(a.payload).slice(0, 50) + '...' : 'System event',
